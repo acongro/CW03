@@ -295,4 +295,19 @@ class _TaskListScreenState extends State<TaskListScreen> {
     });
   }
 
- 
+  Future<void> _addTask() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    final newTask = Task(
+      name: text,
+      isDone: false,
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+    );
+    final inserted = await TaskDb.instance.insert(newTask);
+    setState(() {
+      _tasks = List.of(_tasks)..add(inserted);
+    });
+    _controller.clear();
+    _focus.requestFocus();
+  }
+
