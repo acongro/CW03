@@ -99,3 +99,153 @@ class TaskDb {
     return db.delete(_table, where: 'id = ?', whereArgs: [id]);
   }
 }
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const TaskApp());
+}
+
+class TaskApp extends StatefulWidget {
+  const TaskApp({Key? key}) : super(key: key);
+  @override
+  State<TaskApp> createState() => _TaskAppState();
+}
+
+class _TaskAppState extends State<TaskApp> {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  void _toggleTheme(bool dark) {
+    setState(() {
+      _themeMode = dark ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  ThemeData _lightBW() {
+    final base = ThemeData(brightness: Brightness.light);
+    return base.copyWith(
+      useMaterial3: false,
+      scaffoldBackgroundColor: Colors.white,
+      primaryColor: Colors.black,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.black),
+        titleTextStyle: TextStyle(
+          color: Colors.black,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      textTheme: base.textTheme.apply(
+        bodyColor: Colors.black,
+        displayColor: Colors.black,
+      ),
+      iconTheme: const IconThemeData(color: Colors.black),
+      dividerColor: Colors.black,
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+        ),
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        labelStyle: TextStyle(color: Colors.black),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.black, width: 2),
+        ),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: const MaterialStatePropertyAll(Colors.black),
+        checkColor: const MaterialStatePropertyAll(Colors.white),
+        side: const BorderSide(color: Colors.black),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: const MaterialStatePropertyAll(Colors.black),
+        trackColor: MaterialStateProperty.resolveWith(
+          (s) => s.contains(MaterialState.selected)
+              ? Colors.black
+              : Colors.black26,
+        ),
+      ),
+      listTileTheme: const ListTileThemeData(
+        iconColor: Colors.black,
+        textColor: Colors.black,
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: Colors.black,
+        contentTextStyle: TextStyle(color: Colors.white),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: Colors.black,
+      ),
+    );
+  }
+
+  ThemeData _darkBW() {
+    final base = ThemeData(brightness: Brightness.dark);
+    return base.copyWith(
+      useMaterial3: false,
+      scaffoldBackgroundColor: Colors.black,
+      primaryColor: Colors.white,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
+        titleTextStyle: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      textTheme: base.textTheme.apply(
+        bodyColor: Colors.white,
+        displayColor: Colors.white,
+      ),
+      iconTheme: const IconThemeData(color: Colors.white),
+      dividerColor: Colors.white,
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+        ),
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        labelStyle: TextStyle(color: Colors.white),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.white),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.white, width: 2),
+        ),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: const MaterialStatePropertyAll(Colors.white),
+        checkColor: const MaterialStatePropertyAll(Colors.black),
+        side: const BorderSide(color: Colors.white),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: const MaterialStatePropertyAll(Colors.white),
+        trackColor: MaterialStateProperty.resolveWith(
+          (s) => s.contains(MaterialState.selected)
+              ? Colors.white
+              : Colors.white24,
+        ),
+      ),
+      listTileTheme: const ListTileThemeData(
+        iconColor: Colors.white,
+        textColor: Colors.white,
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: Colors.white,
+        contentTextStyle: TextStyle(color: Colors.black),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: Colors.white,
+      ),
+    );
+  }
