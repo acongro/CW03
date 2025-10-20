@@ -311,3 +311,141 @@ class _TaskListScreenState extends State<TaskListScreen> {
     _focus.requestFocus();
   }
 
+  Future<void> _toggleDone(Task task) async {
+    final updated = task.copyWith(isDone: !task.isDone);
+    await TaskDb.instance.update(updated);
+    setState(() {
+      _tasks = _tasks.map((t) => t.id == task.id ? updated : t).toList();
+    });
+  }
+
+  Future<void> _deleteTask(Task task) async {
+    if (task.id == null) return;
+    await TaskDb.instance.delete(task.id!);
+    setState(() {
+      _tasks = _tasks.where((t) => t.id != task.id).toList();
+    });
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Deleted: ${task.name}')));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.themeMode == ThemeMode.dark;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('CW03'),
+        actions: [
+          Row(
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(right: 6.0),
+                child: Text('Light'),
+              ),
+              Switch(value: isDark, onChanged: (v) => widget.onThemeChanged(v)),
+              const Padding(
+                padding: EdgeInsets.only(right: 12.0),
+                child: Text('Dark'),
+              ),
+            ],
+          ),
+        ],
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _controller,
+                          focusNode: _focus,
+                          decoration: const InputDecoration(
+                            labelText: 'Enter a task',
+                            border: OutlineInputBorder(),
+                          ),
+                          onSubmitted: (_) => _addTask(),
+                          textInputAction: TextInputAction.done,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add'),
+                        onPressed: _addTask,
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: _tasks.isEmpty
+                      ? const _EmptyState()
+                      : ListView.separated(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: _tasks.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final task = _tasks[index];
+                            return ListTile(
+                              leading: Checkbox(
+                                value: task.isDone,
+                                onChanged: (_) => _toggleDone(task),
+                              ),
+                              title: Text(
+                                task.name,
+                                style: TextStyle(
+                                  decoration: task.isDone
+                                      ? TextDecoration.lineThrough
+                                      : TextDecoration.none,
+                                  color: task.isDone
+                                      ? Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color
+                                            ?.withOpacity(0.6)
+                                      : null,
+                                ),
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete),
+                                tooltip: 'Delete',
+                                onPressed: () => _deleteTask(task),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: const Text(
+          'Tap above to enter a task',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16),
+        ),
+      ),
+    );
+  }
+}
