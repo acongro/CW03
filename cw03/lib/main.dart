@@ -1,122 +1,101 @@
 import 'package:flutter/material.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart' show join;
 
-void main() {
-  runApp(const MyApp());
-}
+class Task {
+  final int? id;
+  final String name;
+  final bool isDone;
+  final int createdAt;
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  Task({
+    this.id,
+    required this.name,
+    required this.isDone,
+    required this.createdAt,
+  });
 
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+  Task copyWith({int? id, String? name, bool? isDone, int? createdAt}) {
+    return Task(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      isDone: isDone ?? this.isDone,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
+
+  Map<String, Object?> toMap() => {
+    'id': id,
+    'name': name,
+    'is_done': isDone ? 1 : 0,
+    'created_at': createdAt,
+  };
+
+  factory Task.fromMap(Map<String, Object?> map) => Task(
+    id: map['id'] as int?,
+    name: map['name'] as String,
+    isDone: (map['is_done'] as int) == 1,
+    createdAt: map['created_at'] as int,
+  );
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class TaskDb {
+  TaskDb._();
+  static final TaskDb instance = TaskDb._();
+  static const _dbName = 'tasks_v1.db';
+  static const _dbVersion = 1;
+  static const _table = 'tasks';
+  Database? _db;
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  Future<Database> get database async {
+    if (_db != null) return _db!;
+    _db = await _openDb();
+    return _db!;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+  Future<Database> _openDb() async {
+    final dir = await getDatabasesPath();
+    final path = join(dir, _dbName);
+    return openDatabase(
+      path,
+      version: _dbVersion,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE $_table (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            is_done INTEGER NOT NULL DEFAULT 0,
+            created_at INTEGER NOT NULL
+          )
+        ''');
+      },
     );
+  }
+
+  Future<List<Task>> getAll() async {
+    final db = await database;
+    final rows = await db.query(_table, orderBy: 'created_at ASC');
+    return rows.map((e) => Task.fromMap(e)).toList();
+  }
+
+  Future<Task> insert(Task task) async {
+    final db = await database;
+    final id = await db.insert(_table, task.toMap());
+    return task.copyWith(id: id);
+  }
+
+  Future<int> update(Task task) async {
+    final db = await database;
+    return db.update(
+      _table,
+      task.toMap(),
+      where: 'id = ?',
+      whereArgs: [task.id],
+    );
+  }
+
+  Future<int> delete(int id) async {
+    final db = await database;
+    return db.delete(_table, where: 'id = ?', whereArgs: [id]);
   }
 }
