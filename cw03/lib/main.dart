@@ -249,3 +249,50 @@ class _TaskAppState extends State<TaskApp> {
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Task Manager (sqflite)',
+      debugShowCheckedModeBanner: false,
+      themeMode: _themeMode,
+      theme: _lightBW(),
+      darkTheme: _darkBW(),
+      home: TaskListScreen(themeMode: _themeMode, onThemeChanged: _toggleTheme),
+    );
+  }
+}
+
+class TaskListScreen extends StatefulWidget {
+  final ThemeMode themeMode;
+  final void Function(bool isDark) onThemeChanged;
+  const TaskListScreen({
+    Key? key,
+    required this.themeMode,
+    required this.onThemeChanged,
+  }) : super(key: key);
+  @override
+  State<TaskListScreen> createState() => _TaskListScreenState();
+}
+
+class _TaskListScreenState extends State<TaskListScreen> {
+  final _controller = TextEditingController();
+  final _focus = FocusNode();
+  bool _loading = true;
+  List<Task> _tasks = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final items = await TaskDb.instance.getAll();
+    setState(() {
+      _tasks = items;
+      _loading = false;
+    });
+  }
+
+ 
